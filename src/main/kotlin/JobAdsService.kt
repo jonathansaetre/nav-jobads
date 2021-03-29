@@ -22,19 +22,19 @@ private var WEEK_FIELDS: WeekFields = WeekFields.of(Locale.getDefault())
 fun fetchJobsAds_last6Month_containsJavaOrKotlin_prettyJson(): String {
     val today = LocalDateTime.now()
     val dateInPast = today.minusMonths(6)
-    val list = jobadsClient.fetchJobAds(dateInPast)
-    val javaAds = list.filter { jobAd -> REGEX_JAVA.containsMatchIn(jobAd.description) }
-    val kotlinAds = list.filter { jobAd -> REGEX_KOTLIN.containsMatchIn(jobAd.description) }
+    val jobadsFetched = jobadsClient.fetchJobAds(dateInPast)
+    val javaAds = jobadsFetched.filter { jobAd -> REGEX_JAVA.containsMatchIn(jobAd.description) }
+    val kotlinAds = jobadsFetched.filter { jobAd -> REGEX_KOTLIN.containsMatchIn(jobAd.description) }
 
     val javaAdsPerWeek = groupByWeek(javaAds)
     val kotlinAdsPerWeek = groupByWeek(kotlinAds)
 
     val adsPerWeek = HashMap<Int, JobadsPerWeek>()
     javaAdsPerWeek.forEach { (week, liste) -> adsPerWeek.put(week,
-        JobadsPerWeek(week = week, year = list.getOrNull(0)?.publishedDate?.year ?: 0, antAnnonserJava = liste.size)) }
+        JobadsPerWeek(week = week, year = liste.getOrNull(0)?.publishedDate?.year ?: 0, antAnnonserJava = liste.size)) }
 
     kotlinAdsPerWeek.forEach { (week, liste) ->
-        adsPerWeek.getOrPut(week) { JobadsPerWeek(week = week, year = list.getOrNull(0)?.publishedDate?.year ?: 0,
+        adsPerWeek.getOrPut(week) { JobadsPerWeek(week = week, year = liste.getOrNull(0)?.publishedDate?.year ?: 0,
             antAnnonserKotlin = liste.size) }.antAnnonserKotlin = liste.size }
 
     return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(adsPerWeek.values)

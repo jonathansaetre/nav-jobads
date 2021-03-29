@@ -1,17 +1,26 @@
 
 import dto.Jobad
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
+import org.mockito.MockitoAnnotations
 import java.time.LocalDateTime
 
 internal class JobAdsServiceTest {
 
+    @Mock
+    private lateinit var jobadsClientMock: JobadsClient
+
+    @BeforeEach
+    fun setup() {
+        MockitoAnnotations.initMocks(this)
+    }
 
 
-    @Ignore
+
     @Test
     fun fetchJobsAds_last6Month_containsJavaOrKotlin_prettyJsonTest() {
 
@@ -26,9 +35,7 @@ internal class JobAdsServiceTest {
         jobads.add(Jobad(LocalDateTime.now(), "KOTLIN asdasd"))
         jobads.add(Jobad(LocalDateTime.now(), "javKOTLINsdasd"))
 
-        val mockJobadsClient = mock(JobadsClient::class.java)
-
-        `when`(mockJobadsClient.fetchJobAds(MockitoHelper.anyObject())).thenReturn(jobads)
+        `when`(jobadsClientMock.fetchJobAds(any(LocalDateTime::class.java))).thenReturn(jobads)
 
         val result = fetchJobsAds_last6Month_containsJavaOrKotlin_prettyJson()
 
