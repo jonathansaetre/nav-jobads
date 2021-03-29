@@ -1,45 +1,46 @@
-
-
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import dto.Jobad
 import dto.JobadsPerWeek
+import dto.WeekYear
 import java.time.LocalDateTime
 import java.time.temporal.WeekFields
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 
-private val jsonMapper = JsonMapper.builder().addModule(KotlinModule()).addModule(JavaTimeModule()).build()
-private val jobadsClient = JobadsClient()
+class JobAdsService(private val jobadsClient: JobadsClient) {
 
-private val REGEX_KOTLIN = "(?i)\\Wkotlin\\W".toRegex()
-private val REGEX_JAVA = "(?i)\\Wjava\\W".toRegex()
-private var WEEK_FIELDS: WeekFields = WeekFields.of(Locale.getDefault())
 
-fun fetchJobsAds_last6Month_containsJavaOrKotlin_prettyJson(): String {
-    val today = LocalDateTime.now()
-    val dateInPast = today.minusMonths(6)
-    val jobadsFetched = jobadsClient.fetchJobAds(dateInPast)
-    val javaAds = jobadsFetched.filter { jobAd -> REGEX_JAVA.containsMatchIn(jobAd.description) }
-    val kotlinAds = jobadsFetched.filter { jobAd -> REGEX_KOTLIN.containsMatchIn(jobAd.description) }
+    private val REGEX_JAVA = "^java\\W|\\Wjava\$|^java\$|\\Wjava\\W".toRegex(RegexOption.IGNORE_CASE)
+    private val REGEX_KOTLIN = "^kotlin\\W|\\Wkotlin\$|^kotlin\$|\\Wkotlin\\W".toRegex(RegexOption.IGNORE_CASE)
+    private var WEEK_FIELDS: WeekFields = WeekFields.of(Locale.getDefault())
 
-    val javaAdsPerWeek = groupByWeek(javaAds)
-    val kotlinAdsPerWeek = groupByWeek(kotlinAds)
 
-    val adsPerWeek = HashMap<Int, JobadsPerWeek>()
-    javaAdsPerWeek.forEach { (week, liste) -> adsPerWeek.put(week,
-        JobadsPerWeek(week = week, year = liste.getOrNull(0)?.publishedDate?.year ?: 0, antAnnonserJava = liste.size)) }
+    fun fetchJobsAds_last6Month_containsJavaOrKotlin_prettyJson(): List<JobadsPerWeek> {
+        val today = LocalDateTime.now()
+        val dateInPast = today.minusMonths(6)
+        val jobadsFetched = jobadsClient.fetchJobAds(dateInPast)
+        val javaAds = jobadsFetched.filter { jobAd -> REGEX_JAVA.containsMatchIn(jobAd.description) }
+        val kotlinAds = jobadsFetched.filter { jobAd -> REGEX_KOTLIN.containsMatchIn(jobAd.description) }
 
-    kotlinAdsPerWeek.forEach { (week, liste) ->
-        adsPerWeek.getOrPut(week) { JobadsPerWeek(week = week, year = liste.getOrNull(0)?.publishedDate?.year ?: 0,
-            antAnnonserKotlin = liste.size) }.antAnnonserKotlin = liste.size }
+        val javaAdsPerWeek = groupByWeek(javaAds)
+        val kotlinAdsPerWeek = groupByWeek(kotlinAds)
 
-    return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(adsPerWeek.values)
-}
+        val adsPerWeek = HashMap<WeekYear, JobadsPerWeek>()
+        javaAdsPerWeek.forEach { (week_year, liste) -> adsPerWeek.put(week_year,
+            JobadsPerWeek(week = week_year.week, year = week_year.year, antAnnonserJava = liste.size)) }
 
-private fun groupByWeek(jobadsList: List<Jobad>): Map<Int, List<Jobad>> {
-    return jobadsList.groupBy { x -> x.publishedDate.get(WEEK_FIELDS.weekOfYear()) }
+        kotlinAdsPerWeek.forEach { (week_year, liste) ->
+            adsPerWeek.getOrPut(week_year) { JobadsPerWeek(week = week_year.week, year = week_year.year,
+                antAnnonserKotlin = liste.size) }.antAnnonserKotlin = liste.size }
+
+        return ArrayList(adsPerWeek.toSortedMap().values)
+    }
+
+    private fun groupByWeek(jobadsList: List<Jobad>): Map<WeekYear, List<Jobad>> {
+        return jobadsList.groupBy { x -> WeekYear(x.publishedDate.get(WEEK_FIELDS.weekOfYear()),
+            x.publishedDate.year) }
+    }
+
 }
