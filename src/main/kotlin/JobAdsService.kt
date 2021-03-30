@@ -1,11 +1,9 @@
+
 import dto.Jobad
 import dto.JobadsPerWeek
 import dto.WeekYear
 import java.time.LocalDateTime
 import java.time.temporal.WeekFields
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 
@@ -14,7 +12,7 @@ class JobAdsService(private val jobadsClient: JobadsClient) {
 
     private val REGEX_JAVA = "^java\\W|\\Wjava\$|^java\$|\\Wjava\\W".toRegex(RegexOption.IGNORE_CASE)
     private val REGEX_KOTLIN = "^kotlin\\W|\\Wkotlin\$|^kotlin\$|\\Wkotlin\\W".toRegex(RegexOption.IGNORE_CASE)
-    private var WEEK_FIELDS: WeekFields = WeekFields.of(Locale.getDefault())
+    private var WEEK_FIELDS: WeekFields = WeekFields.ISO
 
 
     fun fetchJobsAds_last6Month_containsJavaOrKotlin_prettyJson(): List<JobadsPerWeek> {

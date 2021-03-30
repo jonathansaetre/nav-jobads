@@ -28,7 +28,7 @@ internal class JobAdsServiceTest {
     fun fetchJobsAds_last6Month_containsJavaOrKotlin_prettyJsonTest() {
 
         val publishDate1 = LocalDateTime.of(2020,12, 1, 0,0)
-        val publishDate2 = LocalDateTime.of(2021,1, 1, 0,0)
+        val publishDate2 = LocalDateTime.of(2021,1, 4, 0,0)
         val publishDate3 = LocalDateTime.of(2021,2, 1, 0,0)
         val jobads = ArrayList<Jobad>()
         jobads.add(Jobad(publishDate3, "kotlin"))
@@ -61,7 +61,7 @@ internal class JobAdsServiceTest {
         val exptectedResult = arrayListOf(
             JobadsPerWeek(49, 2020, 6, 5),
             JobadsPerWeek(1, 2021, 1, 0),
-            JobadsPerWeek(6, 2021, 0, 1)
+            JobadsPerWeek(5, 2021, 0, 1)
         )
 
         assertEquals(result.size, exptectedResult.size)
